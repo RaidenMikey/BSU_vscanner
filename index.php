@@ -78,10 +78,12 @@
                     <span class="text-3xl">🚗</span>
                     <span>BSU Vehicle Scanner</span>
                 </div>
-                <ul class="hidden md:flex list-none gap-8">
+                <ul class="hidden md:flex list-none gap-8 items-center">
                     <li><a href="#features" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Features</a></li>
                     <li><a href="#how-it-works" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">How It Works</a></li>
                     <li><a href="#contact" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Contact</a></li>
+                    <li><a href="register.php" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Register</a></li>
+                    <li><a href="login.blade.php" class="bg-primary-red text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-red-dark transition-colors duration-300 no-underline">Login</a></li>
                 </ul>
             </div>
         </div>
@@ -95,7 +97,7 @@
                     <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">Secure Campus Entry with Advanced Vehicle Scanning</h1>
                     <p class="text-xl text-gray-600 mb-8 leading-relaxed">Efficiently verify student vehicle registration and manage campus access with our state-of-the-art security system</p>
                     <div class="flex gap-4 flex-wrap">
-                        <button class="bg-primary-red text-white px-8 py-3.5 rounded-lg text-base font-semibold hover:bg-primary-red-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300">Get Started</button>
+                        <a href="login.blade.php" class="bg-primary-red text-white px-8 py-3.5 rounded-lg text-base font-semibold hover:bg-primary-red-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 inline-block">Get Started</a>
                         <button class="bg-white text-primary-red border-2 border-primary-red px-8 py-3.5 rounded-lg text-base font-semibold hover:bg-gray-100 transition-colors duration-300">Learn More</button>
                     </div>
                 </div>
@@ -213,7 +215,7 @@
             <div>
                 <h2 class="text-4xl font-bold mb-4">Ready to Enhance Your Campus Security?</h2>
                 <p class="text-xl mb-10 opacity-95">Get started today and experience seamless vehicle management</p>
-                <button class="bg-white text-primary-red px-10 py-4.5 rounded-lg text-lg font-semibold hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300">Contact Security Office</button>
+                <a href="login.blade.php" class="bg-white text-primary-red px-10 py-4.5 rounded-lg text-lg font-semibold hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 inline-block">Contact Security Office</a>
             </div>
         </div>
     </section>
@@ -252,3 +254,4 @@
     <script src="js/script.js"></script>
 </body>
 </html>
+
