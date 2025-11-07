@@ -23,3 +23,21 @@ CREATE TABLE IF NOT EXISTS `users` (
     UNIQUE KEY `email` (`email`),
     UNIQUE KEY `student_id` (`student_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create vehicles table
+CREATE TABLE IF NOT EXISTS `vehicles` (
+    `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT(11) UNSIGNED NOT NULL,
+    `license_plate` VARCHAR(20) NOT NULL,
+    `make` VARCHAR(100) NOT NULL,
+    `model` VARCHAR(100) NOT NULL,
+    `color` VARCHAR(50) NOT NULL,
+    `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    `registered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `license_plate` (`license_plate`),
+    KEY `user_id` (`user_id`),
+    KEY `status` (`status`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -14,13 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     $terms = isset($_POST['terms']) ? true : false;
+    $role = $_POST['role'] ?? 'student'; // Get role from form
     
     // Validation
     if (empty($full_name) || empty($email) || empty($student_id) || empty($password) || empty($confirm_password)) {
         $error = 'All fields are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Invalid email format.';
-    } elseif (!preg_match('/^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$/', $email)) {
+    } elseif ($role === 'student' && !preg_match('/^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$/', $email)) {
         $error = 'Email must be a valid BatState-U email address (@g.batstate-u.edu.ph).';
     } elseif (strlen($password) < 8) {
         $error = 'Password must be at least 8 characters long.';
@@ -51,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
             
             if ($result->num_rows > 0) {
-                $error = 'Student ID is already registered.';
+                $error = ($role === 'student' ? 'Student ID' : 'Employee ID') . ' is already registered.';
                 $stmt->close();
             } else {
                 $stmt->close();
@@ -61,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Insert user into database
                 $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, password, role) VALUES (?, ?, ?, ?, ?)");
-                $role = 'student';
                 $stmt->bind_param("sssss", $full_name, $email, $student_id, $hashed_password, $role);
                 
                 if ($stmt->execute()) {
@@ -122,22 +122,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .animate-fade-in-up {
             animation: fadeInUp 0.8s ease;
         }
+        .tab-button {
+            border-bottom: 2px solid transparent;
+        }
+        .tab-button.active {
+            border-bottom-color: #DC2626;
+        }
+        .tab-content {
+            display: block;
+        }
+        .tab-content.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="font-sans text-gray-900 bg-gradient-to-br from-white to-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md animate-fade-in-up">
         <!-- Logo and Header -->
         <div class="text-center mb-8">
-            <div class="flex items-center justify-center gap-2.5 text-3xl font-bold text-primary-red mb-4">
-                <span class="text-4xl">🚗</span>
-                <span>BSU Vehicle Scanner</span>
+            <div class="flex items-center justify-center gap-2 text-xl sm:text-2xl md:text-3xl font-bold text-primary-red mb-4">
+                <span class="text-2xl sm:text-3xl md:text-4xl">🚗</span>
+                <span class="break-words">BSU Vehicle Scanner</span>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-            <p class="text-gray-600">Register to access the vehicle scanning system</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+            <p class="text-sm sm:text-base text-gray-600">Register to access the vehicle scanning system</p>
         </div>
 
         <!-- Registration Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
+        <div class="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 border-2 border-gray-100">
+            <!-- Tabs -->
+            <div class="flex border-b-2 border-gray-200 mb-4 md:mb-6">
+                <button type="button" id="studentTab" class="flex-1 py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm md:text-base font-semibold text-primary-red border-b-2 border-primary-red transition-colors duration-200 tab-button active" data-tab="student">
+                    Student Registration
+                </button>
+                <button type="button" id="guardTab" class="flex-1 py-2 sm:py-3 px-2 sm:px-4 text-center text-xs sm:text-sm md:text-base font-semibold text-gray-500 hover:text-primary-red transition-colors duration-200 tab-button" data-tab="guard">
+                    Guard Registration
+                </button>
+            </div>
             <?php if ($error): ?>
                 <div class="mb-5 bg-red-50 border-2 border-red-200 rounded-lg p-4">
                     <p class="text-red-800 text-sm font-medium"><?php echo htmlspecialchars($error); ?></p>
@@ -151,7 +172,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
             
-            <form method="POST" action="" id="registerForm" class="space-y-5">
+            <!-- Student Registration Form -->
+            <form method="POST" action="" id="studentForm" class="space-y-5 tab-content" data-role="student">
+                <input type="hidden" name="role" value="student">
                 <!-- Full Name Input -->
                 <div>
                     <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -164,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         placeholder="John Doe"
                         autocomplete="name"
                         required
-                        value="<?php echo isset($full_name) ? htmlspecialchars($full_name) : ''; ?>"
+                        value="<?php echo isset($full_name) && (!isset($_POST['role']) || $_POST['role'] === 'student') ? htmlspecialchars($full_name) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                 </div>
@@ -182,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         pattern="^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$"
                         autocomplete="email"
                         required
-                        value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>"
+                        value="<?php echo isset($email) && (!isset($_POST['role']) || $_POST['role'] === 'student') ? htmlspecialchars($email) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                     <p class="mt-1 text-xs text-gray-500">
@@ -202,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         placeholder="2020-12345"
                         autocomplete="off"
                         required
-                        value="<?php echo isset($student_id) ? htmlspecialchars($student_id) : ''; ?>"
+                        value="<?php echo isset($student_id) && (!isset($_POST['role']) || $_POST['role'] === 'student') ? htmlspecialchars($student_id) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                 </div>
@@ -258,11 +281,133 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Submit Button -->
                 <button 
                     type="submit" 
-                    id="registerButton"
+                    id="studentRegisterButton"
                     class="w-full bg-primary-red hover:bg-primary-red-dark text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
-                    <span id="registerText">Create Account</span>
-                    <span id="registerSpinner" class="hidden">
+                    <span id="studentRegisterText">Create Student Account</span>
+                    <span id="studentRegisterSpinner" class="hidden">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating account...
+                    </span>
+                </button>
+            </form>
+
+            <!-- Guard Registration Form -->
+            <form method="POST" action="" id="guardForm" class="space-y-5 tab-content hidden" data-role="guard">
+                <input type="hidden" name="role" value="guard">
+                <!-- Full Name Input -->
+                <div>
+                    <label for="guard_full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name <span class="text-primary-red">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="guard_full_name" 
+                        name="full_name" 
+                        placeholder="John Doe"
+                        autocomplete="name"
+                        required
+                        value="<?php echo isset($full_name) && (isset($_POST['role']) && $_POST['role'] === 'guard') ? htmlspecialchars($full_name) : ''; ?>"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                    >
+                </div>
+
+                <!-- Email Input -->
+                <div>
+                    <label for="guard_email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address <span class="text-primary-red">*</span>
+                    </label>
+                    <input 
+                        type="email" 
+                        id="guard_email" 
+                        name="email" 
+                        placeholder="guard@example.com"
+                        autocomplete="email"
+                        required
+                        value="<?php echo isset($email) && (isset($_POST['role']) && $_POST['role'] === 'guard') ? htmlspecialchars($email) : ''; ?>"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">
+                        Any valid email address
+                    </p>
+                </div>
+
+                <!-- Employee ID Input -->
+                <div>
+                    <label for="guard_student_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Employee ID <span class="text-primary-red">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="guard_student_id" 
+                        name="student_id" 
+                        placeholder="EMP-12345"
+                        autocomplete="off"
+                        required
+                        value="<?php echo isset($student_id) && (isset($_POST['role']) && $_POST['role'] === 'guard') ? htmlspecialchars($student_id) : ''; ?>"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                    >
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <label for="guard_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password <span class="text-primary-red">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="guard_password" 
+                        name="password" 
+                        autocomplete="new-password"
+                        required
+                        minlength="8"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">
+                        Must be at least 8 characters long
+                    </p>
+                </div>
+
+                <!-- Confirm Password Input -->
+                <div>
+                    <label for="guard_confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm Password <span class="text-primary-red">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="guard_confirm_password" 
+                        name="confirm_password" 
+                        autocomplete="new-password"
+                        required
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                    >
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="flex items-start">
+                    <input 
+                        type="checkbox" 
+                        id="guard_terms" 
+                        name="terms" 
+                        required
+                        class="mt-1 w-4 h-4 rounded text-primary-red focus:ring-primary-red border-gray-300"
+                    >
+                    <label for="guard_terms" class="ml-2 text-sm text-gray-700">
+                        I agree to the <a href="#" class="text-primary-red hover:underline">Terms and Conditions</a> and <a href="#" class="text-primary-red hover:underline">Privacy Policy</a> <span class="text-primary-red">*</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    id="guardRegisterButton"
+                    class="w-full bg-primary-red hover:bg-primary-red-dark text-white py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                >
+                    <span id="guardRegisterText">Create Guard Account</span>
+                    <span id="guardRegisterSpinner" class="hidden">
                         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -297,41 +442,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Password confirmation validation
+        // Tab switching functionality
+        const studentTab = document.getElementById('studentTab');
+        const guardTab = document.getElementById('guardTab');
+        const studentForm = document.getElementById('studentForm');
+        const guardForm = document.getElementById('guardForm');
+
+        function switchTab(tab) {
+            if (tab === 'student') {
+                studentTab.classList.add('text-primary-red', 'border-primary-red');
+                studentTab.classList.remove('text-gray-500');
+                guardTab.classList.remove('text-primary-red', 'border-primary-red');
+                guardTab.classList.add('text-gray-500');
+                studentForm.classList.remove('hidden');
+                guardForm.classList.add('hidden');
+            } else {
+                guardTab.classList.add('text-primary-red', 'border-primary-red');
+                guardTab.classList.remove('text-gray-500');
+                studentTab.classList.remove('text-primary-red', 'border-primary-red');
+                studentTab.classList.add('text-gray-500');
+                guardForm.classList.remove('hidden');
+                studentForm.classList.add('hidden');
+            }
+        }
+
+        studentTab.addEventListener('click', () => switchTab('student'));
+        guardTab.addEventListener('click', () => switchTab('guard'));
+
+        // Password confirmation validation for student form
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirm_password');
         
         function validatePassword() {
-            if (password.value !== confirmPassword.value) {
+            if (password && confirmPassword && password.value !== confirmPassword.value) {
                 confirmPassword.setCustomValidity('Passwords do not match');
-            } else {
+            } else if (confirmPassword) {
                 confirmPassword.setCustomValidity('');
             }
         }
         
-        password.addEventListener('change', validatePassword);
-        confirmPassword.addEventListener('keyup', validatePassword);
+        if (password && confirmPassword) {
+            password.addEventListener('change', validatePassword);
+            confirmPassword.addEventListener('keyup', validatePassword);
+        }
 
-        // Handle form submission with loading state
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            // Validate passwords match before submission
-            if (password.value !== confirmPassword.value) {
-                e.preventDefault();
-                alert('Passwords do not match!');
-                return false;
+        // Password confirmation validation for guard form
+        const guardPassword = document.getElementById('guard_password');
+        const guardConfirmPassword = document.getElementById('guard_confirm_password');
+        
+        function validateGuardPassword() {
+            if (guardPassword && guardConfirmPassword && guardPassword.value !== guardConfirmPassword.value) {
+                guardConfirmPassword.setCustomValidity('Passwords do not match');
+            } else if (guardConfirmPassword) {
+                guardConfirmPassword.setCustomValidity('');
             }
-            
-            const button = document.getElementById('registerButton');
-            const text = document.getElementById('registerText');
-            const spinner = document.getElementById('registerSpinner');
-            
-            // Show loading state
-            button.disabled = true;
-            text.classList.add('hidden');
-            spinner.classList.remove('hidden');
-            
-            // Form will submit normally to the server
-        });
+        }
+        
+        if (guardPassword && guardConfirmPassword) {
+            guardPassword.addEventListener('change', validateGuardPassword);
+            guardConfirmPassword.addEventListener('keyup', validateGuardPassword);
+        }
+
+        // Handle student form submission with loading state
+        if (document.getElementById('studentForm')) {
+            document.getElementById('studentForm').addEventListener('submit', function(e) {
+                // Validate passwords match before submission
+                if (password && confirmPassword && password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Passwords do not match!');
+                    return false;
+                }
+                
+                const button = document.getElementById('studentRegisterButton');
+                const text = document.getElementById('studentRegisterText');
+                const spinner = document.getElementById('studentRegisterSpinner');
+                
+                // Show loading state
+                button.disabled = true;
+                text.classList.add('hidden');
+                spinner.classList.remove('hidden');
+            });
+        }
+
+        // Handle guard form submission with loading state
+        if (document.getElementById('guardForm')) {
+            document.getElementById('guardForm').addEventListener('submit', function(e) {
+                // Validate passwords match before submission
+                if (guardPassword && guardConfirmPassword && guardPassword.value !== guardConfirmPassword.value) {
+                    e.preventDefault();
+                    alert('Passwords do not match!');
+                    return false;
+                }
+                
+                const button = document.getElementById('guardRegisterButton');
+                const text = document.getElementById('guardRegisterText');
+                const spinner = document.getElementById('guardRegisterSpinner');
+                
+                // Show loading state
+                button.disabled = true;
+                text.classList.add('hidden');
+                spinner.classList.remove('hidden');
+            });
+        }
+
+        // Show appropriate tab based on previous submission
+        <?php if (isset($_POST['role']) && $_POST['role'] === 'guard'): ?>
+        switchTab('guard');
+        <?php endif; ?>
     </script>
 </body>
 </html>

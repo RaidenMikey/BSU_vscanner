@@ -122,16 +122,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="w-full max-w-md animate-fade-in-up">
         <!-- Logo and Header -->
         <div class="text-center mb-8">
-            <div class="flex items-center justify-center gap-2.5 text-3xl font-bold text-primary-red mb-4">
-                <span class="text-4xl">🚗</span>
-                <span>BSU Vehicle Scanner</span>
+            <div class="flex items-center justify-center gap-2 text-xl sm:text-2xl md:text-3xl font-bold text-primary-red mb-4">
+                <span class="text-2xl sm:text-3xl md:text-4xl">🚗</span>
+                <span class="break-words">BSU Vehicle Scanner</span>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p class="text-gray-600">Sign in to your account to continue</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <p class="text-sm sm:text-base text-gray-600">Sign in to your account to continue</p>
         </div>
 
         <!-- Login Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
+        <div class="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 border-2 border-gray-100">
             <?php if ($error): ?>
                 <div class="mb-5 bg-red-50 border-2 border-red-200 rounded-lg p-4">
                     <p class="text-red-800 text-sm font-medium"><?php echo htmlspecialchars($error); ?></p>

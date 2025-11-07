@@ -73,6 +73,35 @@ try {
                     </div>";
                 }
             }
+            
+            // Create vehicles table
+            $createVehiclesTable = "CREATE TABLE IF NOT EXISTS `vehicles` (
+                `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                `user_id` INT(11) UNSIGNED NOT NULL,
+                `license_plate` VARCHAR(20) NOT NULL,
+                `make` VARCHAR(100) NOT NULL,
+                `model` VARCHAR(100) NOT NULL,
+                `color` VARCHAR(50) NOT NULL,
+                `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                `registered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `license_plate` (`license_plate`),
+                KEY `user_id` (`user_id`),
+                KEY `status` (`status`),
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            
+            $vehiclesTableCreated = $conn->query($createVehiclesTable);
+            if ($vehiclesTableCreated === TRUE) {
+                $tableMessage .= "<div class='bg-green-50 border border-green-200 rounded-lg p-4 mb-4'>
+                    <p class='text-green-800 text-sm'>✅ Vehicles table created successfully!</p>
+                </div>";
+            } else {
+                $tableMessage .= "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
+                    <p class='text-yellow-800 text-sm'>⚠️ Vehicles table: " . $conn->error . "</p>
+                </div>";
+            }
         } else {
             $tableMessage = "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
                 <p class='text-yellow-800 text-sm'>⚠️ Users table: " . $conn->error . "</p>

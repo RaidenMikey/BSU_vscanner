@@ -63,19 +63,20 @@ $conn->close();
 </head>
 <body class="font-sans text-gray-900 bg-gray-50 min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50 py-4">
-        <div class="max-w-6xl mx-auto px-5">
+    <nav class="bg-white shadow-sm sticky top-0 z-50 py-3 md:py-4">
+        <div class="max-w-6xl mx-auto px-4 sm:px-5">
             <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2.5 text-2xl font-bold text-primary-red">
-                    <span class="text-3xl">🚗</span>
-                    <span>BSU Vehicle Scanner</span>
+                <div class="flex items-center gap-1.5 sm:gap-2.5 text-lg sm:text-xl md:text-2xl font-bold text-primary-red">
+                    <span class="text-xl sm:text-2xl md:text-3xl">🚗</span>
+                    <span class="hidden sm:inline">BSU Vehicle Scanner</span>
+                    <span class="sm:hidden">BSU Scanner</span>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 sm:gap-4">
                     <div class="text-right hidden md:block">
                         <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['full_name'] ?? 'Student'); ?></p>
                         <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                     </div>
-                    <a href="../logout.php" class="bg-primary-red text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-red-dark transition-colors duration-300">
+                    <a href="../logout.php" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
                         Logout
                     </a>
                 </div>
@@ -84,17 +85,17 @@ $conn->close();
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-5 py-8">
+    <main class="max-w-6xl mx-auto px-4 sm:px-5 py-6 md:py-8">
         <!-- Welcome Section -->
-        <div class="bg-gradient-to-br from-primary-red to-primary-red-dark rounded-2xl p-8 text-white mb-8 animate-fade-in-up shadow-xl">
-            <h1 class="text-4xl font-bold mb-2">Welcome, <?php echo htmlspecialchars($user['full_name'] ?? 'Student'); ?>!</h1>
-            <p class="text-lg opacity-90">Manage your vehicle registration and view campus access updates</p>
+        <div class="bg-gradient-to-br from-primary-red to-primary-red-dark rounded-2xl p-4 sm:p-6 md:p-8 text-white mb-6 md:mb-8 animate-fade-in-up shadow-xl">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Welcome, <?php echo htmlspecialchars($user['full_name'] ?? 'Student'); ?>!</h1>
+            <p class="text-sm sm:text-base md:text-lg opacity-90">Manage your vehicle registration and view campus access updates</p>
         </div>
 
         <!-- Student Information -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 animate-fade-in-up">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Profile</h2>
-            <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 mb-6 md:mb-8 animate-fade-in-up">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Your Profile</h2>
+            <div class="grid sm:grid-cols-2 gap-4 md:gap-6">
                 <div class="border-2 border-gray-200 rounded-lg p-6">
                     <p class="text-sm text-gray-500 mb-2">Full Name</p>
                     <p class="text-lg font-semibold text-gray-900"><?php echo htmlspecialchars($user['full_name'] ?? ''); ?></p>
@@ -122,7 +123,7 @@ $conn->close();
         </div>
 
         <!-- Student Tools -->
-        <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="grid sm:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
             <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-primary-red">
                 <div class="text-4xl mb-4">🚙</div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Register Your Vehicle</h3>
@@ -150,9 +151,9 @@ $conn->close();
         </div>
 
         <!-- Helpful Resources -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 animate-fade-in-up">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Helpful Resources</h2>
-            <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 animate-fade-in-up">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Helpful Resources</h2>
+            <div class="grid sm:grid-cols-2 gap-4 md:gap-6">
                 <div class="border border-gray-200 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">Campus Parking Guidelines</h3>
                     <p class="text-gray-600 text-sm mb-4">Learn the rules for parking zones, decals, and operating hours.</p>
