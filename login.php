@@ -1,3 +1,81 @@
+<?php
+session_start();
+require_once 'config/config.php';
+
+$error = '';
+
+// Check if user is already logged in
+if (isset($_SESSION['user_id'])) {
+    if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'guard') {
+        header('Location: guard/guard.php');
+    } else {
+        header('Location: student/student.php');
+    }
+    exit();
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get form data
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']) ? true : false;
+    
+    // Validation
+    if (empty($email) || empty($password)) {
+        $error = 'Email and password are required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Invalid email format.';
+    } elseif (!preg_match('/^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$/', $email)) {
+        $error = 'Email must be a valid BatState-U email address (@g.batstate-u.edu.ph).';
+    } else {
+        // Connect to database
+        $conn = getDBConnection();
+        
+        // Get user by email
+        $stmt = $conn->prepare("SELECT id, full_name, email, student_id, password, role FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            $error = 'Invalid email or password.';
+            $stmt->close();
+        } else {
+            $user = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Set session variables
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['full_name'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['student_id'] = $user['student_id'];
+                $_SESSION['user_role'] = $user['role'];
+                
+                // Handle remember me (set cookie for 30 days)
+                if ($remember) {
+                    $cookie_value = base64_encode($user['id'] . ':' . hash('sha256', $user['email'] . $user['password']));
+                    setcookie('remember_token', $cookie_value, time() + (30 * 24 * 60 * 60), '/'); // 30 days
+                }
+                
+                // Redirect to dashboard based on role
+                if ($user['role'] === 'guard') {
+                    header('Location: guard/guard.php');
+                } else {
+                    header('Location: student/student.php');
+                }
+                exit();
+            } else {
+                $error = 'Invalid email or password.';
+            }
+        }
+        
+        $conn->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,7 +132,13 @@
 
         <!-- Login Form Card -->
         <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
-            <form method="POST" action="#" id="loginForm" class="space-y-5">
+            <?php if ($error): ?>
+                <div class="mb-5 bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                    <p class="text-red-800 text-sm font-medium"><?php echo htmlspecialchars($error); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <form method="POST" action="" id="loginForm" class="space-y-5">
                 <!-- Email Input -->
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
@@ -66,8 +150,9 @@
                         name="email" 
                         placeholder="example@g.batstate-u.edu.ph"
                         pattern="^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$"
-                        autocomplete="off"
+                        autocomplete="email"
                         required
+                        value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                     <p class="mt-1 text-xs text-gray-500">
@@ -84,7 +169,7 @@
                         type="password" 
                         id="password" 
                         name="password" 
-                        autocomplete="new-password"
+                        autocomplete="current-password"
                         required
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
@@ -149,22 +234,16 @@
     <script>
         // Handle form submission with loading state
         document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
             const button = document.getElementById('loginButton');
             const text = document.getElementById('loginText');
             const spinner = document.getElementById('loginSpinner');
             
+            // Show loading state
             button.disabled = true;
             text.classList.add('hidden');
             spinner.classList.remove('hidden');
             
-            // Simulate form submission (replace with actual form handling)
-            setTimeout(() => {
-                button.disabled = false;
-                text.classList.remove('hidden');
-                spinner.classList.add('hidden');
-                alert('Login functionality will be implemented here');
-            }, 1500);
+            // Form will submit normally to the server
         });
     </script>
 </body>

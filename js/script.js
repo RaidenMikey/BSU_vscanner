@@ -1,26 +1,32 @@
-// Smooth scrolling for navigation links
+// Smooth scrolling for navigation links (only for hash links, not external links)
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+        const href = this.getAttribute('href');
+        // Only prevent default for hash links that exist on the page
+        if (href !== '#' && document.querySelector(href)) {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }
     });
 });
 
 // Add scroll effect to navbar
-window.addEventListener('scroll', function() {
-    const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-        navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
-    } else {
-        navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
-    }
-});
+const navbar = document.querySelector('.navbar');
+if (navbar) {
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+        } else {
+            navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+        }
+    });
+}
 
 // Animate elements on scroll
 const observerOptions = {
@@ -53,13 +59,13 @@ document.querySelectorAll('.step').forEach(step => {
     observer.observe(step);
 });
 
-// Button click handlers
-document.querySelectorAll('.btn-primary, .btn-secondary').forEach(button => {
+// Button click handlers - only for buttons that should scroll, not links
+document.querySelectorAll('button.btn-primary, button.btn-secondary').forEach(button => {
     button.addEventListener('click', function(e) {
-        if (this.textContent.includes('Get Started') || this.textContent.includes('Contact')) {
+        if (this.textContent.includes('Learn More')) {
             e.preventDefault();
-            // Scroll to contact section or show modal (can be customized)
-            document.getElementById('contact').scrollIntoView({
+            // Scroll to features section
+            document.getElementById('features')?.scrollIntoView({
                 behavior: 'smooth'
             });
         }
@@ -76,6 +82,22 @@ if (statsCard) {
     
     statsCard.addEventListener('mouseleave', function() {
         this.style.transform = 'scale(1)';
+    });
+}
+
+// Mobile menu toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+const menuIcon = document.getElementById('menuIcon');
+
+if (mobileMenuBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', function() {
+        mobileMenu.classList.toggle('hidden');
+        if (mobileMenu.classList.contains('hidden')) {
+            menuIcon.textContent = '☰';
+        } else {
+            menuIcon.textContent = '✕';
+        }
     });
 }
 

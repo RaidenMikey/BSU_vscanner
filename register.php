@@ -1,3 +1,87 @@
+<?php
+session_start();
+require_once 'config/config.php';
+
+$error = '';
+$success = '';
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get form data
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $student_id = trim($_POST['student_id'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $terms = isset($_POST['terms']) ? true : false;
+    
+    // Validation
+    if (empty($full_name) || empty($email) || empty($student_id) || empty($password) || empty($confirm_password)) {
+        $error = 'All fields are required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Invalid email format.';
+    } elseif (!preg_match('/^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$/', $email)) {
+        $error = 'Email must be a valid BatState-U email address (@g.batstate-u.edu.ph).';
+    } elseif (strlen($password) < 8) {
+        $error = 'Password must be at least 8 characters long.';
+    } elseif ($password !== $confirm_password) {
+        $error = 'Passwords do not match.';
+    } elseif (!$terms) {
+        $error = 'You must agree to the Terms and Conditions.';
+    } else {
+        // Connect to database
+        $conn = getDBConnection();
+        
+        // Check if email already exists
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $error = 'Email address is already registered.';
+            $stmt->close();
+        } else {
+            $stmt->close();
+            
+            // Check if student ID already exists
+            $stmt = $conn->prepare("SELECT id FROM users WHERE student_id = ?");
+            $stmt->bind_param("s", $student_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                $error = 'Student ID is already registered.';
+                $stmt->close();
+            } else {
+                $stmt->close();
+                
+                // Hash password
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                
+                // Insert user into database
+                $stmt = $conn->prepare("INSERT INTO users (full_name, email, student_id, password, role) VALUES (?, ?, ?, ?, ?)");
+                $role = 'student';
+                $stmt->bind_param("sssss", $full_name, $email, $student_id, $hashed_password, $role);
+                
+                if ($stmt->execute()) {
+                    $success = 'Registration successful! Redirecting to login page...';
+                    // Clear form data
+                    $full_name = $email = $student_id = '';
+                    // Redirect to login page after 2 seconds
+                    header("refresh:2;url=login.php");
+                } else {
+                    $error = 'Registration failed. Please try again later.';
+                }
+                
+                $stmt->close();
+            }
+        }
+        
+        $conn->close();
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,7 +138,20 @@
 
         <!-- Registration Form Card -->
         <div class="bg-white rounded-2xl shadow-xl p-8 border-2 border-gray-100">
-            <form method="POST" action="#" id="registerForm" class="space-y-5">
+            <?php if ($error): ?>
+                <div class="mb-5 bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                    <p class="text-red-800 text-sm font-medium"><?php echo htmlspecialchars($error); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="mb-5 bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                    <p class="text-green-800 text-sm font-medium"><?php echo htmlspecialchars($success); ?></p>
+                    <p class="text-green-700 text-xs mt-2">If you are not redirected automatically, <a href="login.php" class="underline font-semibold">click here to login</a>.</p>
+                </div>
+            <?php endif; ?>
+            
+            <form method="POST" action="" id="registerForm" class="space-y-5">
                 <!-- Full Name Input -->
                 <div>
                     <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -67,6 +164,7 @@
                         placeholder="John Doe"
                         autocomplete="name"
                         required
+                        value="<?php echo isset($full_name) ? htmlspecialchars($full_name) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                 </div>
@@ -84,6 +182,7 @@
                         pattern="^[a-zA-Z0-9._%+-]+@g\.batstate-u\.edu\.ph$"
                         autocomplete="email"
                         required
+                        value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                     <p class="mt-1 text-xs text-gray-500">
@@ -103,6 +202,7 @@
                         placeholder="2020-12345"
                         autocomplete="off"
                         required
+                        value="<?php echo isset($student_id) ? htmlspecialchars($student_id) : ''; ?>"
                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
                     >
                 </div>
@@ -176,7 +276,7 @@
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-600">
                     Already have an account? 
-                    <a href="login.blade.php" class="text-primary-red hover:underline font-medium">
+                    <a href="login.php" class="text-primary-red hover:underline font-medium">
                         Sign in here
                     </a>
                 </p>
@@ -214,29 +314,23 @@
 
         // Handle form submission with loading state
         document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate passwords match
+            // Validate passwords match before submission
             if (password.value !== confirmPassword.value) {
+                e.preventDefault();
                 alert('Passwords do not match!');
-                return;
+                return false;
             }
             
             const button = document.getElementById('registerButton');
             const text = document.getElementById('registerText');
             const spinner = document.getElementById('registerSpinner');
             
+            // Show loading state
             button.disabled = true;
             text.classList.add('hidden');
             spinner.classList.remove('hidden');
             
-            // Simulate form submission (replace with actual form handling)
-            setTimeout(() => {
-                button.disabled = false;
-                text.classList.remove('hidden');
-                spinner.classList.add('hidden');
-                alert('Registration functionality will be implemented here');
-            }, 1500);
+            // Form will submit normally to the server
         });
     </script>
 </body>
