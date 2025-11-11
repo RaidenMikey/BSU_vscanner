@@ -41,7 +41,7 @@ try {
             `email` VARCHAR(255) NOT NULL,
             `student_id` VARCHAR(50) NOT NULL,
             `password` VARCHAR(255) NOT NULL,
-            `role` ENUM('student','guard') NOT NULL DEFAULT 'student',
+            `role` ENUM('student','guard','admin') NOT NULL DEFAULT 'student',
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
@@ -52,6 +52,8 @@ try {
         $tableCreated = $conn->query($createUsersTable);
         $tableMessage = '';
         $migrationMessage = '';
+        $vehicleMigrationMessages = '';
+        $adminMessage = '';
         
         if ($tableCreated === TRUE) {
             $tableMessage = "<div class='bg-green-50 border border-green-200 rounded-lg p-4 mb-4'>
@@ -73,15 +75,34 @@ try {
                     </div>";
                 }
             }
+
+            // Ensure role column includes admin option
+            $roleEnumUpdate = "ALTER TABLE users MODIFY COLUMN role ENUM('student','guard','admin') NOT NULL DEFAULT 'student'";
+            if ($conn->query($roleEnumUpdate) === TRUE) {
+                $migrationMessage .= "<div class='bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4'>
+                    <p class='text-blue-800 text-sm'>ℹ️ Updated 'role' column to include admin role.</p>
+                </div>";
+            } else {
+                $migrationMessage .= "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
+                    <p class='text-yellow-800 text-sm'>⚠️ Could not update role enum: " . $conn->error . "</p>
+                </div>";
+            }
             
             // Create vehicles table
             $createVehiclesTable = "CREATE TABLE IF NOT EXISTS `vehicles` (
                 `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `user_id` INT(11) UNSIGNED NOT NULL,
+                `vehicle_type` VARCHAR(50) NOT NULL DEFAULT '',
                 `license_plate` VARCHAR(20) NOT NULL,
                 `make` VARCHAR(100) NOT NULL,
                 `model` VARCHAR(100) NOT NULL,
                 `color` VARCHAR(50) NOT NULL,
+                `driver_license_no` VARCHAR(100) NOT NULL DEFAULT '',
+                `driver_license_image` VARCHAR(255) DEFAULT NULL,
+                `or_image` VARCHAR(255) DEFAULT NULL,
+                `cr_image` VARCHAR(255) DEFAULT NULL,
+                `qr_code_path` VARCHAR(255) DEFAULT NULL,
+                `qr_code_data` TEXT DEFAULT NULL,
                 `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
                 `registered_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -97,9 +118,70 @@ try {
                 $tableMessage .= "<div class='bg-green-50 border border-green-200 rounded-lg p-4 mb-4'>
                     <p class='text-green-800 text-sm'>✅ Vehicles table created successfully!</p>
                 </div>";
+                
+                $vehicleColumns = [
+                    'vehicle_type' => "ALTER TABLE `vehicles` ADD COLUMN `vehicle_type` VARCHAR(50) NOT NULL DEFAULT '' AFTER `user_id`",
+                    'driver_license_no' => "ALTER TABLE `vehicles` ADD COLUMN `driver_license_no` VARCHAR(100) NOT NULL DEFAULT '' AFTER `color`",
+                    'driver_license_image' => "ALTER TABLE `vehicles` ADD COLUMN `driver_license_image` VARCHAR(255) DEFAULT NULL AFTER `driver_license_no`",
+                    'or_image' => "ALTER TABLE `vehicles` ADD COLUMN `or_image` VARCHAR(255) DEFAULT NULL AFTER `driver_license_image`",
+                    'cr_image' => "ALTER TABLE `vehicles` ADD COLUMN `cr_image` VARCHAR(255) DEFAULT NULL AFTER `or_image`",
+                    'qr_code_path' => "ALTER TABLE `vehicles` ADD COLUMN `qr_code_path` VARCHAR(255) DEFAULT NULL AFTER `cr_image`",
+                    'qr_code_data' => "ALTER TABLE `vehicles` ADD COLUMN `qr_code_data` TEXT DEFAULT NULL AFTER `qr_code_path`"
+                ];
+                
+                foreach ($vehicleColumns as $column => $statement) {
+                    $check = $conn->query("SHOW COLUMNS FROM `vehicles` LIKE '$column'");
+                    if ($check && $check->num_rows === 0) {
+                        if ($conn->query($statement) === TRUE) {
+                            $vehicleMigrationMessages .= "<div class='bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4'>
+                                <p class='text-blue-800 text-sm'>ℹ️ Added '$column' column to vehicles table.</p>
+                            </div>";
+                        } else {
+                            $vehicleMigrationMessages .= "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
+                                <p class='text-yellow-800 text-sm'>⚠️ Could not add '$column' column: " . $conn->error . "</p>
+                            </div>";
+                        }
+                    }
+                }
             } else {
                 $tableMessage .= "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
                     <p class='text-yellow-800 text-sm'>⚠️ Vehicles table: " . $conn->error . "</p>
+                </div>";
+            }
+            
+            // Create default admin account
+            $adminEmail = 'admin';
+            $adminPassword = 'admin123';
+            $adminFullName = 'Administrator';
+            $adminStudentId = 'ADMIN001';
+            $hashedPassword = password_hash($adminPassword, PASSWORD_DEFAULT);
+            
+            // Check if admin already exists
+            $checkAdmin = $conn->prepare("SELECT id FROM users WHERE email = ? OR role = 'admin' LIMIT 1");
+            $checkAdmin->bind_param("s", $adminEmail);
+            $checkAdmin->execute();
+            $adminExists = $checkAdmin->get_result();
+            $checkAdmin->close();
+            
+            if ($adminExists->num_rows === 0) {
+                // Insert default admin
+                $insertAdmin = $conn->prepare("INSERT INTO users (full_name, email, student_id, password, role) VALUES (?, ?, ?, ?, 'admin')");
+                $insertAdmin->bind_param("ssss", $adminFullName, $adminEmail, $adminStudentId, $hashedPassword);
+                
+                if ($insertAdmin->execute()) {
+                    $adminMessage = "<div class='bg-green-50 border border-green-200 rounded-lg p-4 mb-4'>
+                        <p class='text-green-800 text-sm font-semibold'>✅ Default admin account created!</p>
+                        <p class='text-green-700 text-xs mt-2'>Email: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+                    </div>";
+                } else {
+                    $adminMessage = "<div class='bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4'>
+                        <p class='text-yellow-800 text-sm'>⚠️ Could not create admin account: " . $conn->error . "</p>
+                    </div>";
+                }
+                $insertAdmin->close();
+            } else {
+                $adminMessage = "<div class='bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4'>
+                    <p class='text-blue-800 text-sm'>ℹ️ Admin account already exists. Skipping default admin creation.</p>
                 </div>";
             }
         } else {
@@ -137,6 +219,8 @@ try {
         </div>
         $tableMessage
         $migrationMessage
+        $vehicleMigrationMessages
+        $adminMessage
         <div class='bg-green-50 border border-green-200 rounded-lg p-4 mb-6'>
             <p class='text-green-800 text-sm'>The database has been initialized and is ready to use.</p>
         </div>

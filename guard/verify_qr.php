@@ -22,64 +22,112 @@ if (empty($qrData)) {
 
 try {
     $conn = getDBConnection();
-    
-    // Parse QR code data (assuming format: vehicle_id or JSON with vehicle_id)
+
+    // Parse QR code data (supports legacy IDs and new encoded payloads)
     $vehicleId = null;
-    
-    // Try to parse as JSON first
+    $qrLookupData = null;
+    $qrParts = [];
+
     $parsed = json_decode($qrData, true);
     if ($parsed && isset($parsed['vehicle_id'])) {
-        $vehicleId = $parsed['vehicle_id'];
-    } else {
-        // Try as direct vehicle ID
-        $vehicleId = filter_var($qrData, FILTER_VALIDATE_INT);
-        if (!$vehicleId) {
-            // Try to extract vehicle ID from string
-            if (preg_match('/vehicle[_-]?id[=:]?\s*(\d+)/i', $qrData, $matches)) {
-                $vehicleId = (int)$matches[1];
+        $vehicleId = (int) $parsed['vehicle_id'];
+    } elseif (strpos($qrData, '|') !== false) {
+        $qrParts = explode('|', $qrData);
+        if (count($qrParts) === 3) {
+            $qrLookupData = $qrData;
+            if (preg_match('/VEH-\d{4}-(\d+)/i', $qrParts[0], $matches)) {
+                $vehicleIdFromTag = (int) ltrim($matches[1], '0');
+                if ($vehicleIdFromTag > 0) {
+                    $vehicleId = $vehicleIdFromTag;
+                }
             }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid QR code format']);
+            $conn->close();
+            exit();
+        }
+    } else {
+        $vehicleId = filter_var($qrData, FILTER_VALIDATE_INT);
+        if (!$vehicleId && preg_match('/vehicle[_-]?id[=:]?\s*(\d+)/i', $qrData, $matches)) {
+            $vehicleId = (int) $matches[1];
         }
     }
-    
-    if (!$vehicleId) {
+
+    if (!$vehicleId && !$qrLookupData) {
         echo json_encode(['success' => false, 'message' => 'Invalid QR code format']);
         $conn->close();
         exit();
     }
-    
+
     // Get vehicle information with student details
-    $stmt = $conn->prepare("
-        SELECT 
-            v.id as vehicle_id,
-            v.license_plate,
-            v.make,
-            v.model,
-            v.color,
-            v.registered_at,
-            v.status,
-            u.id as student_id,
-            u.full_name,
-            u.email,
-            u.student_id as student_number
-        FROM vehicles v
-        INNER JOIN users u ON v.user_id = u.id
-        WHERE v.id = ? AND v.status = 'approved'
-    ");
-    
-    $stmt->bind_param("i", $vehicleId);
+    if ($qrLookupData) {
+        $stmt = $conn->prepare("
+            SELECT 
+                v.id as vehicle_id,
+                v.license_plate,
+                v.make,
+                v.model,
+                v.color,
+                v.registered_at,
+                v.status,
+                v.qr_code_data,
+                u.id as student_id,
+                u.full_name,
+                u.email,
+                u.student_id as student_number
+            FROM vehicles v
+            INNER JOIN users u ON v.user_id = u.id
+            WHERE v.qr_code_data = ? AND v.status = 'approved'
+        ");
+        $stmt->bind_param("s", $qrLookupData);
+    } else {
+        $stmt = $conn->prepare("
+            SELECT 
+                v.id as vehicle_id,
+                v.license_plate,
+                v.make,
+                v.model,
+                v.color,
+                v.registered_at,
+                v.status,
+                v.qr_code_data,
+                u.id as student_id,
+                u.full_name,
+                u.email,
+                u.student_id as student_number
+            FROM vehicles v
+            INNER JOIN users u ON v.user_id = u.id
+            WHERE v.id = ? AND v.status = 'approved'
+        ");
+        $stmt->bind_param("i", $vehicleId);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         echo json_encode(['success' => false, 'message' => 'Vehicle not found or not approved']);
         $stmt->close();
         $conn->close();
         exit();
     }
-    
+
     $data = $result->fetch_assoc();
     $stmt->close();
-    
+
+    if ($qrLookupData) {
+        $expectedStudentTag = 'STU-' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $data['student_number'] ?? ''));
+        $expectedHash = strtoupper(hash('sha256', strtoupper($data['license_plate'])));
+        $scannedStudentTag = strtoupper($qrParts[1]);
+        $scannedHash = strtoupper($qrParts[2]);
+
+        if ($expectedStudentTag !== $scannedStudentTag || $expectedHash !== $scannedHash) {
+            echo json_encode(['success' => false, 'message' => 'QR code verification failed. Please try again.']);
+            $conn->close();
+            exit();
+        }
+    }
+
     // Format response
     $response = [
         'success' => true,
@@ -99,10 +147,10 @@ try {
             'status' => $data['status']
         ]
     ];
-    
+
     echo json_encode($response);
     $conn->close();
-    
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);

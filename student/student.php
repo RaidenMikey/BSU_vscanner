@@ -76,7 +76,7 @@ $conn->close();
                         <p class="text-sm font-medium text-gray-900"><?php echo htmlspecialchars($user['full_name'] ?? 'Student'); ?></p>
                         <p class="text-xs text-gray-500"><?php echo htmlspecialchars($user['email'] ?? ''); ?></p>
                     </div>
-                    <a href="../logout.php" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
+                    <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
                         Logout
                     </a>
                 </div>
@@ -128,13 +128,13 @@ $conn->close();
                 <div class="text-4xl mb-4">🚙</div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Register Your Vehicle</h3>
                 <p class="text-gray-600 text-sm mb-4">Submit vehicle details and upload documents for verification.</p>
-                <button class="text-primary-red font-medium hover:underline">Coming Soon →</button>
+                <a href="register_vehicle.php" class="text-primary-red font-medium hover:underline">Register Now →</a>
             </div>
             <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-primary-red">
                 <div class="text-4xl mb-4">📄</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Registration Status</h3>
-                <p class="text-gray-600 text-sm mb-4">Track the approval status of your submitted vehicle registrations.</p>
-                <button class="text-primary-red font-medium hover:underline">Coming Soon →</button>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Registered Vehicles</h3>
+                <p class="text-gray-600 text-sm mb-4">View all of your submitted vehicles and their current status.</p>
+                <a href="registered_vehicles.php" class="text-primary-red font-medium hover:underline">View Vehicles →</a>
             </div>
             <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-primary-red">
                 <div class="text-4xl mb-4">🔔</div>

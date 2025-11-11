@@ -86,7 +86,7 @@ $user_id = $_SESSION['user_id'];
                     <a href="guard.php" class="text-gray-700 hover:text-primary-red transition-colors duration-300 text-xs sm:hidden">
                         ← Back
                     </a>
-                    <a href="../logout.php" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
+                    <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
                         Logout
                     </a>
                 </div>
