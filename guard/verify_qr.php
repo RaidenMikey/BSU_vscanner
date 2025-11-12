@@ -33,7 +33,8 @@ try {
         $vehicleId = (int) $parsed['vehicle_id'];
     } elseif (strpos($qrData, '|') !== false) {
         $qrParts = explode('|', $qrData);
-        if (count($qrParts) === 3) {
+        // Support both old format (3 parts with hash) and new format (2 parts without hash)
+        if (count($qrParts) === 2 || count($qrParts) === 3) {
             $qrLookupData = $qrData;
             if (preg_match('/VEH-\d{4}-(\d+)/i', $qrParts[0], $matches)) {
                 $vehicleIdFromTag = (int) ltrim($matches[1], '0');
@@ -117,14 +118,24 @@ try {
 
     if ($qrLookupData) {
         $expectedStudentTag = 'STU-' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $data['student_number'] ?? ''));
-        $expectedHash = strtoupper(hash('sha256', strtoupper($data['license_plate'])));
         $scannedStudentTag = strtoupper($qrParts[1]);
-        $scannedHash = strtoupper($qrParts[2]);
-
-        if ($expectedStudentTag !== $scannedStudentTag || $expectedHash !== $scannedHash) {
-            echo json_encode(['success' => false, 'message' => 'QR code verification failed. Please try again.']);
+        
+        // Verify student tag matches
+        if ($expectedStudentTag !== $scannedStudentTag) {
+            echo json_encode(['success' => false, 'message' => 'QR code verification failed. Student ID mismatch.']);
             $conn->close();
             exit();
+        }
+        
+        // If old format with hash (3 parts), verify hash for backward compatibility
+        if (count($qrParts) === 3) {
+            $expectedHash = strtoupper(hash('sha256', strtoupper($data['license_plate'])));
+            $scannedHash = strtoupper($qrParts[2]);
+            if ($expectedHash !== $scannedHash) {
+                echo json_encode(['success' => false, 'message' => 'QR code verification failed. Please try again.']);
+                $conn->close();
+                exit();
+            }
         }
     }
 

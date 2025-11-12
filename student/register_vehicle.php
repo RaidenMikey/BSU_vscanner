@@ -140,82 +140,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $insertStmt = $conn->prepare("
-            INSERT INTO vehicles (
-                user_id,
-                vehicle_type,
-                license_plate,
-                make,
-                model,
-                color,
-                driver_license_no,
-                driver_license_image,
-                or_image,
-                cr_image,
-                status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-        ");
-
-        $insertStmt->bind_param(
-            "isssssssss",
-            $user_id,
-            $vehicleType,
-            $licensePlate,
-            $brand,
-            $model,
-            $color,
-            $driverLicenseNo,
-            $driverLicensePath,
-            $orPath,
-            $crPath
-        );
-
-        if ($insertStmt->execute()) {
-            $vehicleId = $insertStmt->insert_id;
-            $insertStmt->close();
-
-            $vehicleTag = sprintf('VEH-%s-%04d', date('Y'), $vehicleId);
-            $studentTag = 'STU-' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $user['student_id'] ?? ''));
-            $plateHash = hash('sha256', $licensePlate);
-            $qrPayload = $vehicleTag . '|' . $studentTag . '|' . $plateHash;
-
-            $qrImageName = 'qr_vehicle_' . $vehicleId . '_' . time() . '.png';
-            $qrAbsoluteDir = $baseUploadDir;
-            $qrRelativePath = $baseUploadRelative . $qrImageName;
-
-            if (!is_dir($qrAbsoluteDir) && !mkdir($qrAbsoluteDir, 0755, true)) {
-                $errors[] = 'Vehicle registered but failed to prepare QR directory. Please contact support.';
-            } else {
-                $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrPayload);
-                $qrImageContent = @file_get_contents($qrUrl);
-
-                if ($qrImageContent === false) {
-                    $errors[] = 'Vehicle registered but QR code generation failed. Please contact support.';
-                } else {
-                    $qrAbsolutePath = $qrAbsoluteDir . $qrImageName;
-                    if (file_put_contents($qrAbsolutePath, $qrImageContent) === false) {
-                        $errors[] = 'Vehicle registered but unable to save QR code. Please contact support.';
-                    } else {
-                        $updateStmt = $conn->prepare("UPDATE vehicles SET qr_code_path = ?, qr_code_data = ? WHERE id = ?");
-                        $updateStmt->bind_param("ssi", $qrRelativePath, $qrPayload, $vehicleId);
-                        $updateStmt->execute();
-                        $updateStmt->close();
-                    }
-                }
-            }
-
-            if (empty($errors)) {
-                $_SESSION['vehicle_success'] = 'Vehicle registration submitted successfully! Your request is pending verification.';
-                header('Location: register_vehicle.php');
-                exit();
-            }
+        // Check for duplicate license plate before attempting insert
+        $checkStmt = $conn->prepare("SELECT id FROM vehicles WHERE license_plate = ? LIMIT 1");
+        $checkStmt->bind_param("s", $licensePlate);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        
+        if ($checkResult->num_rows > 0) {
+            $errors[] = 'A vehicle with license plate "' . htmlspecialchars($licensePlate) . '" is already registered in the system. Please use a different plate number or contact support if this is an error.';
+            $checkStmt->close();
         } else {
-            if ($conn->errno === 1062) {
-                $errors[] = 'A vehicle with this plate number is already registered.';
-            } else {
-                $errors[] = 'Database error: ' . $conn->error;
+            $checkStmt->close();
+            
+            // Proceed with insert
+            try {
+                $insertStmt = $conn->prepare("
+                    INSERT INTO vehicles (
+                        user_id,
+                        vehicle_type,
+                        license_plate,
+                        make,
+                        model,
+                        color,
+                        driver_license_no,
+                        driver_license_image,
+                        or_image,
+                        cr_image,
+                        status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                ");
+
+                $insertStmt->bind_param(
+                    "isssssssss",
+                    $user_id,
+                    $vehicleType,
+                    $licensePlate,
+                    $brand,
+                    $model,
+                    $color,
+                    $driverLicenseNo,
+                    $driverLicensePath,
+                    $orPath,
+                    $crPath
+                );
+
+                if ($insertStmt->execute()) {
+                    $vehicleId = $insertStmt->insert_id;
+                    $insertStmt->close();
+
+                    $vehicleTag = sprintf('VEH-%s-%04d', date('Y'), $vehicleId);
+                    $studentTag = 'STU-' . strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $user['student_id'] ?? ''));
+                    $qrPayload = $vehicleTag . '|' . $studentTag;
+
+                    $qrImageName = 'qr_vehicle_' . $vehicleId . '_' . time() . '.png';
+                    $qrAbsoluteDir = $baseUploadDir;
+                    $qrRelativePath = $baseUploadRelative . $qrImageName;
+
+                    if (!is_dir($qrAbsoluteDir) && !mkdir($qrAbsoluteDir, 0755, true)) {
+                        $errors[] = 'Vehicle registered but failed to prepare QR directory. Please contact support.';
+                    } else {
+                        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrPayload);
+                        $qrImageContent = @file_get_contents($qrUrl);
+
+                        if ($qrImageContent === false) {
+                            $errors[] = 'Vehicle registered but QR code generation failed. Please contact support.';
+                        } else {
+                            $qrAbsolutePath = $qrAbsoluteDir . $qrImageName;
+                            if (file_put_contents($qrAbsolutePath, $qrImageContent) === false) {
+                                $errors[] = 'Vehicle registered but unable to save QR code. Please contact support.';
+                            } else {
+                                $updateStmt = $conn->prepare("UPDATE vehicles SET qr_code_path = ?, qr_code_data = ? WHERE id = ?");
+                                $updateStmt->bind_param("ssi", $qrRelativePath, $qrPayload, $vehicleId);
+                                $updateStmt->execute();
+                                $updateStmt->close();
+                            }
+                        }
+                    }
+
+                    if (empty($errors)) {
+                        $_SESSION['vehicle_success'] = 'Vehicle registration submitted successfully! Your request is pending verification.';
+                        header('Location: register_vehicle.php');
+                        exit();
+                    }
+                } else {
+                    // Handle database errors
+                    if ($conn->errno === 1062) {
+                        $errors[] = 'A vehicle with license plate "' . htmlspecialchars($licensePlate) . '" is already registered in the system. Please use a different plate number.';
+                    } else {
+                        $errors[] = 'Unable to register vehicle. Please try again or contact support if the problem persists.';
+                        error_log('Vehicle registration error: ' . $conn->error . ' (Error code: ' . $conn->errno . ')');
+                    }
+                    $insertStmt->close();
+                }
+            } catch (mysqli_sql_exception $e) {
+                // Catch any SQL exceptions
+                if ($e->getCode() === 1062 || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                    $errors[] = 'A vehicle with license plate "' . htmlspecialchars($licensePlate) . '" is already registered in the system. Please use a different plate number.';
+                } else {
+                    $errors[] = 'An error occurred while registering your vehicle. Please try again or contact support if the problem persists.';
+                    error_log('Vehicle registration exception: ' . $e->getMessage());
+                }
+            } catch (Exception $e) {
+                // Catch any other exceptions
+                $errors[] = 'An unexpected error occurred. Please try again or contact support if the problem persists.';
+                error_log('Vehicle registration error: ' . $e->getMessage());
             }
-            $insertStmt->close();
         }
     }
 }
@@ -305,9 +334,9 @@ $conn->close();
                     <a href="student.php" class="text-gray-700 hover:text-primary-red transition-colors duration-300 text-xs sm:text-sm md:text-base">
                         ← Back to Dashboard
                     </a>
-                    <a href="../logout.php" onclick="return confirm('Are you sure you want to logout?');" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
+                    <button onclick="openLogoutModal()" class="bg-primary-red text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:bg-primary-red-dark transition-colors duration-300">
                         Logout
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -480,6 +509,65 @@ $conn->close();
             <p>&copy; 2024 BSU Vehicle Scanner. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeLogoutModal()"></div>
+
+        <!-- Modal container - centered -->
+        <div class="flex items-center justify-center min-h-screen px-4 py-4">
+            <!-- Modal panel -->
+            <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-lg">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-primary-red" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Confirm Logout
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to logout? You will need to sign in again to access your account.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <a href="../logout.php" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-red text-base font-medium text-white hover:bg-primary-red-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Logout
+                    </a>
+                    <button type="button" onclick="closeLogoutModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeLogoutModal();
+            }
+        });
+    </script>
 </body>
 </html>
 

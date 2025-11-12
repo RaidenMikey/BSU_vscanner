@@ -65,28 +65,28 @@ $documentLinks = [
 
     <div class="mt-4 flex flex-wrap gap-3">
         <?php if ($vehicle['status'] === 'pending'): ?>
-            <form method="POST" class="inline">
-                <input type="hidden" name="vehicle_id" value="<?php echo (int) $vehicle['id']; ?>">
-                <input type="hidden" name="status" value="approved">
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors duration-300">
-                    Approve
-                </button>
-            </form>
-            <form method="POST" class="inline">
-                <input type="hidden" name="vehicle_id" value="<?php echo (int) $vehicle['id']; ?>">
-                <input type="hidden" name="status" value="rejected">
-                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors duration-300">
-                    Reject
-                </button>
-            </form>
+            <button 
+                type="button" 
+                onclick="openConfirmModal(<?php echo (int) $vehicle['id']; ?>, 'approved', '<?php echo htmlspecialchars(addslashes($vehicle['make'] . ' ' . $vehicle['model'])); ?>', '<?php echo htmlspecialchars(addslashes($vehicle['full_name'])); ?>')" 
+                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors duration-300"
+            >
+                Approve
+            </button>
+            <button 
+                type="button" 
+                onclick="openConfirmModal(<?php echo (int) $vehicle['id']; ?>, 'rejected', '<?php echo htmlspecialchars(addslashes($vehicle['make'] . ' ' . $vehicle['model'])); ?>', '<?php echo htmlspecialchars(addslashes($vehicle['full_name'])); ?>')" 
+                class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors duration-300"
+            >
+                Reject
+            </button>
         <?php else: ?>
-            <form method="POST" class="inline">
-                <input type="hidden" name="vehicle_id" value="<?php echo (int) $vehicle['id']; ?>">
-                <input type="hidden" name="status" value="pending">
-                <button type="submit" class="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors duration-300">
-                    Mark as Pending
-                </button>
-            </form>
+            <button 
+                type="button" 
+                onclick="openConfirmModal(<?php echo (int) $vehicle['id']; ?>, 'pending', '<?php echo htmlspecialchars(addslashes($vehicle['make'] . ' ' . $vehicle['model'])); ?>', '<?php echo htmlspecialchars(addslashes($vehicle['full_name'])); ?>')" 
+                class="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors duration-300"
+            >
+                Mark as Pending
+            </button>
         <?php endif; ?>
     </div>
 </div>
