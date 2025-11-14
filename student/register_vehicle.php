@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/config.php';
+require_once '../lib/qrcode_generator.php';
 
 // Ensure only students can access
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'student') {
@@ -131,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $baseUploadDir = dirname(__DIR__) . '/uploads/vehicles/' . $user_id . '/';
+        $baseUploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'vehicles' . DIRECTORY_SEPARATOR . $user_id . DIRECTORY_SEPARATOR;
         $baseUploadRelative = 'uploads/vehicles/' . $user_id . '/';
 
         $driverLicensePath = handleImageUpload('driver_license_image', $baseUploadDir, $baseUploadRelative, 'driver_license', $errors);
@@ -199,18 +200,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!is_dir($qrAbsoluteDir) && !mkdir($qrAbsoluteDir, 0755, true)) {
                         $errors[] = 'Vehicle registered but failed to prepare QR directory. Please contact support.';
                     } else {
-                        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($qrPayload);
-                        $qrImageContent = @file_get_contents($qrUrl);
-
-                        if ($qrImageContent === false) {
-                            $errors[] = 'Vehicle registered but QR code generation failed. Please contact support.';
-                        } else {
-                            $qrAbsolutePath = $qrAbsoluteDir . $qrImageName;
-                            if (file_put_contents($qrAbsolutePath, $qrImageContent) === false) {
-                                $errors[] = 'Vehicle registered but unable to save QR code. Please contact support.';
+                        $qrAbsolutePath = $qrAbsoluteDir . $qrImageName;
+                        
+                        // Generate QR code (automatically tries multiple methods)
+                        $qrGenerated = generateQRCode($qrPayload, $qrAbsolutePath, 300);
+                        
+                        if (!$qrGenerated) {
+                            // Log detailed error for debugging
+                            $errorDetails = [];
+                            
+                            // Check GD library
+                            $gdAvailable = function_exists('imagecreatetruecolor');
+                            if (!$gdAvailable) {
+                                $errorDetails[] = 'GD library not available (using API fallback)';
+                            }
+                            
+                            // Check directory
+                            if (!is_dir($qrAbsoluteDir)) {
+                                $errorDetails[] = 'Directory does not exist: ' . $qrAbsoluteDir;
+                            } elseif (!is_writable($qrAbsoluteDir)) {
+                                $errorDetails[] = 'Directory not writable: ' . $qrAbsoluteDir;
+                            }
+                            
+                            // Check file
+                            if (file_exists($qrAbsolutePath)) {
+                                if (filesize($qrAbsolutePath) == 0) {
+                                    $errorDetails[] = 'QR file exists but is empty';
+                                }
                             } else {
+                                $errorDetails[] = 'QR file was not created: ' . $qrAbsolutePath;
+                            }
+                            
+                            // Get last PHP error
+                            $lastError = error_get_last();
+                            if ($lastError) {
+                                $errorDetails[] = 'PHP Error: ' . $lastError['message'] . ' in ' . $lastError['file'] . ':' . $lastError['line'];
+                            }
+                            
+                            // Log to error log
+                            error_log('QR Code Generation Failed for vehicle ID: ' . $vehicleId);
+                            error_log('QR Payload: ' . $qrPayload);
+                            error_log('QR Path: ' . $qrAbsolutePath);
+                            foreach ($errorDetails as $detail) {
+                                error_log('  - ' . $detail);
+                            }
+                            
+                            $errorMsg = 'Vehicle registered but QR code generation failed.';
+                            if (!empty($errorDetails)) {
+                                $errorMsg .= ' Details: ' . implode('; ', array_slice($errorDetails, 0, 2));
+                            }
+                            $errors[] = $errorMsg;
+                            
+                            // Still update database with QR data even if image generation fails
+                            // The QR data can be regenerated later if needed
+                            $updateStmt = $conn->prepare("UPDATE vehicles SET qr_code_data = ? WHERE id = ?");
+                            $updateStmt->bind_param("si", $qrPayload, $vehicleId);
+                            $updateStmt->execute();
+                            $updateStmt->close();
+                        } else {
+                            // Verify file was created
+                            if (file_exists($qrAbsolutePath) && filesize($qrAbsolutePath) > 0) {
                                 $updateStmt = $conn->prepare("UPDATE vehicles SET qr_code_path = ?, qr_code_data = ? WHERE id = ?");
                                 $updateStmt->bind_param("ssi", $qrRelativePath, $qrPayload, $vehicleId);
+                                $updateStmt->execute();
+                                $updateStmt->close();
+                            } else {
+                                $errors[] = 'Vehicle registered but QR code file was not created properly.';
+                                // Still save QR data
+                                $updateStmt = $conn->prepare("UPDATE vehicles SET qr_code_data = ? WHERE id = ?");
+                                $updateStmt->bind_param("si", $qrPayload, $vehicleId);
                                 $updateStmt->execute();
                                 $updateStmt->close();
                             }
