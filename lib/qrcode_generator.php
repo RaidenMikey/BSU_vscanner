@@ -15,28 +15,8 @@
  * @return bool True on success, false on failure
  */
 function generateQRCode($data, $filename, $size = 300) {
-    // Check if GD library is available
-    $gdAvailable = function_exists('imagecreatetruecolor');
-    
-    // Try GD-based methods first if available
-    if ($gdAvailable) {
-        // Try minimal version (most reliable)
-        if (generateQRCodeMinimal($data, $filename, $size)) {
-            return true;
-        }
-        
-        // Try simple version
-        if (generateQRCodeSimple($data, $filename, $size)) {
-            return true;
-        }
-        
-        // Try full implementation
-        if (generateQRCodeFull($data, $filename, $size)) {
-            return true;
-        }
-    }
-    
-    // Fallback to API method (works without GD)
+    // The local GD implementation is incomplete (lacks Error Correction).
+    // We force the use of the external API to ensure valid QR codes are generated.
     return generateQRCodeAPI($data, $filename, $size);
 }
 
