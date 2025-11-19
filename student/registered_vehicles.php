@@ -217,9 +217,9 @@ $countRejected = count(array_filter($vehicles, fn($v) => $v['status'] === 'rejec
                                         </a>
                                     <?php endif; ?>
                                     <?php if ($vehicle['status'] === 'approved' && !empty($vehicle['qr_code_path'])): ?>
-                                        <a href="../<?php echo htmlspecialchars($vehicle['qr_code_path']); ?>" target="_blank" class="text-primary-red text-xs font-medium hover:underline">
+                                        <button onclick="openQrModal('<?php echo htmlspecialchars($vehicle['qr_code_path']); ?>', '<?php echo htmlspecialchars($vehicle['qr_code_data']); ?>')" class="text-primary-red text-xs font-medium hover:underline">
                                             View QR Code
-                                        </a>
+                                        </button>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -256,6 +256,38 @@ $countRejected = count(array_filter($vehicles, fn($v) => $v['status'] === 'rejec
             <p>&copy; 2024 BSU Vehicle Scanner. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onclick="closeQrModal()"></div>
+
+        <!-- Modal container - centered -->
+        <div class="flex items-center justify-center min-h-screen px-4 py-4">
+            <!-- Modal panel -->
+            <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-md">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="text-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                            Vehicle QR Code
+                        </h3>
+                        <div class="mt-2 flex justify-center bg-white p-4 rounded-lg border-2 border-gray-100">
+                            <img id="modalQrImage" src="" alt="Vehicle QR Code" class="max-w-full h-auto" />
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-500 mb-1">QR Payload:</p>
+                            <p id="modalQrData" class="text-xs font-mono bg-gray-100 p-2 rounded break-all text-gray-800"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="closeQrModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red sm:mt-0 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
@@ -312,8 +344,22 @@ $countRejected = count(array_filter($vehicles, fn($v) => $v['status'] === 'rejec
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeLogoutModal();
+                closeQrModal();
             }
         });
+
+        // QR Modal Functions
+        function openQrModal(imagePath, qrData) {
+            document.getElementById('modalQrImage').src = '../' + imagePath;
+            document.getElementById('modalQrData').textContent = qrData;
+            document.getElementById('qrModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
     </script>
 </body>
 </html>

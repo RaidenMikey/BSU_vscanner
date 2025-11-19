@@ -148,6 +148,17 @@ $user_id = $_SESSION['user_id'];
                 </div>
             </div>
 
+            <!-- Debug Console -->
+            <div class="bg-gray-900 rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 animate-fade-in-up text-white font-mono text-xs md:text-sm overflow-hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-green-400">Debug Console</h3>
+                    <button onclick="document.getElementById('debugLog').innerHTML=''" class="text-gray-400 hover:text-white">Clear</button>
+                </div>
+                <div id="debugLog" class="h-32 overflow-y-auto space-y-1 p-2 bg-black rounded border border-gray-700">
+                    <div class="text-gray-500">System ready...</div>
+                </div>
+            </div>
+
             <!-- Results Section -->
             <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 animate-fade-in-up">
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 md:mb-6">Verification Result</h2>
@@ -255,18 +266,33 @@ $user_id = $_SESSION['user_id'];
 
         // Initialize scanner
         function initScanner() {
+            logDebug('Initializing scanner...');
             try {
                 html5QrcodeScanner = new Html5Qrcode("qr-reader");
+                logDebug('Scanner instance created');
             } catch (err) {
                 console.error('Error initializing scanner:', err);
                 alert('Error initializing QR scanner. Please refresh the page.');
             }
         }
 
+        function logDebug(msg) {
+            const log = document.getElementById('debugLog');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${msg}`;
+            if (msg.includes('Error') || msg.includes('Fail')) entry.classList.add('text-red-400');
+            else if (msg.includes('Success')) entry.classList.add('text-green-400');
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+            console.log(msg);
+        }
+
         // Start scanning
         document.getElementById('startScanBtn').addEventListener('click', async function() {
             if (isScanning) return;
             
+            logDebug('Starting camera...');
             try {
                 // Check if browser supports camera
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -301,8 +327,10 @@ $user_id = $_SESSION['user_id'];
                 isScanning = true;
                 document.getElementById('startScanBtn').disabled = true;
                 document.getElementById('stopScanBtn').disabled = false;
+                logDebug('Camera started successfully');
             } catch (err) {
                 console.error('Camera error:', err);
+                logDebug('Camera error: ' + err.message);
                 let errorMsg = 'Error starting camera: ';
                 
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
@@ -349,13 +377,16 @@ $user_id = $_SESSION['user_id'];
                 isScanning = false;
                 document.getElementById('startScanBtn').disabled = false;
                 document.getElementById('stopScanBtn').disabled = true;
+                logDebug('Scanner stopped');
             } catch (err) {
                 console.error('Error stopping scanner:', err);
+                logDebug('Error stopping: ' + err.message);
             }
         });
 
         // Handle successful scan
         function onScanSuccess(decodedText, decodedResult) {
+            logDebug('Scan Success: ' + decodedText);
             verifyQrCode(decodedText);
             // Stop scanning after successful scan
             if (isScanning) {
@@ -373,6 +404,7 @@ $user_id = $_SESSION['user_id'];
         document.getElementById('verifyManualBtn').addEventListener('click', function() {
             const qrData = document.getElementById('manualQrInput').value.trim();
             if (qrData) {
+                logDebug('Manual verification: ' + qrData);
                 verifyQrCode(qrData);
             } else {
                 alert('Please enter QR code data');
@@ -387,6 +419,8 @@ $user_id = $_SESSION['user_id'];
             document.getElementById('errorState').classList.add('hidden');
             document.getElementById('successState').classList.add('hidden');
 
+            logDebug('Verifying with server...');
+
             try {
                 const response = await fetch('verify_qr.php', {
                     method: 'POST',
@@ -400,7 +434,10 @@ $user_id = $_SESSION['user_id'];
 
                 document.getElementById('loadingState').classList.add('hidden');
 
+                document.getElementById('loadingState').classList.add('hidden');
+
                 if (data.success) {
+                    logDebug('Verification successful');
                     // Show success state
                     document.getElementById('successState').classList.remove('hidden');
                     
@@ -430,10 +467,12 @@ $user_id = $_SESSION['user_id'];
                     window.verificationData = data;
                 } else {
                     // Show error state
+                    logDebug('Verification failed: ' + (data.message || 'Unknown error'));
                     document.getElementById('errorState').classList.remove('hidden');
                     document.getElementById('errorMessage').textContent = data.message || 'Verification failed';
                 }
             } catch (error) {
+                logDebug('Server error: ' + error.message);
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('errorState').classList.remove('hidden');
                 document.getElementById('errorMessage').textContent = 'Error verifying QR code: ' + error.message;

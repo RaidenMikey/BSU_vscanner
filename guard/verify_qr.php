@@ -15,6 +15,10 @@ header('Content-Type: application/json');
 $input = json_decode(file_get_contents('php://input'), true);
 $qrData = $input['qr_data'] ?? '';
 
+// Debug logging
+error_log("QR Verification Request: " . print_r($input, true));
+error_log("QR Data: " . $qrData);
+
 if (empty($qrData)) {
     echo json_encode(['success' => false, 'message' => 'QR code data is required']);
     exit();
