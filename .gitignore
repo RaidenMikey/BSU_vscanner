@@ -6,6 +6,7 @@
 
 # Environment/config files
 /config/*.php
+/config/*.json
 
 # Temporary files
 *.log
