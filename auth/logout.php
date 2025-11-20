@@ -3,7 +3,7 @@ session_start();
 
 $redirect = 'login.php';
 if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
-    $redirect = 'adminlogin.php';
+    $redirect = 'admin_login.php';
 }
 
 // Check for timeout parameter

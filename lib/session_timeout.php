@@ -17,9 +17,9 @@ if (isset($_SESSION['last_activity'])) {
     // If timeout expired
     if ($duration > $timeout_duration) {
         // Determine redirect URL based on role
-        $redirect = '../login.php';
+        $redirect = '../auth/login.php';
         if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
-            $redirect = '../adminlogin.php';
+            $redirect = '../auth/admin_login.php';
         }
         
         // Unset all session variables

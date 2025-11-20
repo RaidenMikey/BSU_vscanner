@@ -1,17 +1,17 @@
 <?php
 session_start();
-require_once 'config/config.php';
+require_once '../config/config.php';
 
 $error = '';
 
 if (isset($_SESSION['user_id'])) {
     $role = $_SESSION['user_role'] ?? '';
     if ($role === 'admin') {
-        header('Location: admin/admin.php');
+        header('Location: ../admin/admin.php');
     } elseif ($role === 'guard') {
-        header('Location: guard/guard.php');
+        header('Location: ../guard/guard.php');
     } else {
-        header('Location: student/student.php');
+        header('Location: ../student/student.php');
     }
     exit();
 }
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['student_id'] = $user['student_id'];
                 $_SESSION['user_role'] = $user['role'];
 
-                header('Location: admin/admin.php');
+                header('Location: ../admin/admin.php');
                 exit();
             }
             $error = 'Invalid credentials or unauthorized access.';
@@ -57,50 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->close();
     }
 }
+
+$page_title = 'Admin Login - BSU Vehicle Scanner';
+$root_path = '..';
+require_once '../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/Batangas_State_Logo.png">
-    <title>Admin Login - BSU Vehicle Scanner</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-red': '#DC2626',
-                        'primary-red-dark': '#B91C1C',
-                        'primary-red-light': '#EF4444',
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease;
-        }
-    </style>
-</head>
 <body class="font-sans text-gray-900 bg-gradient-to-br from-white to-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md animate-fade-in-up">
         <div class="text-center mb-8">

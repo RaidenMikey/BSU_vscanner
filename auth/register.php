@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/config.php';
+require_once '../config/config.php';
 
 $error = '';
 $success = '';
@@ -81,62 +81,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->close();
     }
 }
+
+$page_title = 'Register - BSU Vehicle Scanner';
+$root_path = '..';
+require_once '../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/Batangas_State_Logo.png">
-    <title>Register - BSU Vehicle Scanner</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-red': '#DC2626',
-                        'primary-red-dark': '#B91C1C',
-                        'primary-red-light': '#EF4444',
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease;
-        }
-        .tab-button {
-            border-bottom: 2px solid transparent;
-        }
-        .tab-button.active {
-            border-bottom-color: #DC2626;
-        }
-        .tab-content {
-            display: block;
-        }
-        .tab-content.hidden {
-            display: none;
-        }
-    </style>
-</head>
+<style>
+    .tab-button {
+        border-bottom: 2px solid transparent;
+    }
+    .tab-button.active {
+        border-bottom-color: #DC2626;
+    }
+    .tab-content {
+        display: block;
+    }
+    .tab-content.hidden {
+        display: none;
+    }
+</style>
 <body class="font-sans text-gray-900 bg-gradient-to-br from-white to-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
     <div class="w-full max-w-md animate-fade-in-up">
         <!-- Logo and Header -->
@@ -430,7 +393,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- Back to Home -->
             <div class="mt-4 text-center">
-                <a href="index.php" class="text-sm text-gray-600 hover:text-primary-red transition-colors duration-200 font-medium">
+                <a href="../index.php" class="text-sm text-gray-600 hover:text-primary-red transition-colors duration-200 font-medium">
                     ← Back to Homepage
                 </a>
             </div>
