@@ -1,106 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="images/Batangas_State_Logo.png">
-    <title>BSU Vehicle Scanner - University Security System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-red': '#DC2626',
-                        'primary-red-dark': '#B91C1C',
-                        'primary-red-light': '#EF4444',
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        @keyframes scan {
-            0% {
-                top: 0;
-                opacity: 1;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                top: 100%;
-                opacity: 0;
-            }
-        }
-        .scan-line {
-            animation: scan 2s linear infinite;
-        }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease;
-        }
-        .animate-fade-in-right {
-            animation: fadeInRight 0.8s ease;
-        }
-    </style>
-</head>
+<?php
+$page_title = 'BSU Vehicle Scanner - University Security System';
+$root_path = '.';
+require_once 'includes/header.php';
+?>
 <body class="font-sans text-gray-900 bg-white overflow-x-hidden">
-    <!-- Navigation -->
-    <nav class="navbar bg-white shadow-sm sticky top-0 z-50 py-4">
-        <div class="max-w-6xl mx-auto px-5">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2.5 text-2xl font-bold text-primary-red">
-                    <span class="text-3xl">🚗</span>
-                    <span>BSU Vehicle Scanner</span>
-                </div>
-                <ul class="hidden md:flex list-none gap-8 items-center">
-                    <li><a href="#features" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Features</a></li>
-                    <li><a href="#how-it-works" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">How It Works</a></li>
-                    <li><a href="#contact" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Contact</a></li>
-                    <li><a href="register.php" class="text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline">Register</a></li>
-                    <li><a href="login.php" class="bg-primary-red text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-red-dark transition-colors duration-300 no-underline">Login</a></li>
-                </ul>
-                <!-- Mobile menu button -->
-                <button id="mobileMenuBtn" class="md:hidden text-gray-900 text-2xl focus:outline-none">
-                    <span id="menuIcon">☰</span>
-                </button>
-            </div>
-            <!-- Mobile menu -->
-            <ul id="mobileMenu" class="hidden md:hidden list-none mt-4 space-y-3 pb-4">
-                <li><a href="#features" class="block text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline py-2">Features</a></li>
-                <li><a href="#how-it-works" class="block text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline py-2">How It Works</a></li>
-                <li><a href="#contact" class="block text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline py-2">Contact</a></li>
-                <li><a href="register.php" class="block text-gray-900 font-medium hover:text-primary-red transition-colors duration-300 no-underline py-2">Register</a></li>
-                <li><a href="login.php" class="block bg-primary-red text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-red-dark transition-colors duration-300 no-underline text-center">Login</a></li>
-            </ul>
-        </div>
-    </nav>
+    <?php require_once 'includes/nav_public.php'; ?>
 
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-white to-gray-100 py-12 sm:py-16 md:py-20 min-h-[500px] sm:min-h-[600px] flex items-center">
@@ -110,7 +14,7 @@
                     <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">Secure Campus Entry with Advanced Vehicle Scanning</h1>
                     <p class="text-base sm:text-lg md:text-xl text-gray-600 mb-6 md:mb-8 leading-relaxed">Efficiently verify student vehicle registration and manage campus access with our state-of-the-art security system</p>
                     <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap">
-                        <a href="login.php" class="bg-primary-red text-white px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary-red-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 inline-block text-center">Get Started</a>
+                        <a href="auth/login.php" class="bg-primary-red text-white px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-lg text-sm sm:text-base font-semibold hover:bg-primary-red-dark hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 inline-block text-center">Get Started</a>
                         <button class="btn-secondary bg-white text-primary-red border-2 border-primary-red px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-lg text-sm sm:text-base font-semibold hover:bg-gray-100 transition-colors duration-300">Learn More</button>
                     </div>
                 </div>
@@ -228,43 +132,10 @@
             <div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 px-4">Ready to Enhance Your Campus Security?</h2>
                 <p class="text-base sm:text-lg md:text-xl mb-8 md:mb-10 opacity-95 px-4">Get started today and experience seamless vehicle management</p>
-                <a href="login.php" class="bg-white text-primary-red px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4.5 rounded-lg text-base sm:text-lg font-semibold hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 inline-block">Contact Security Office</a>
+                <a href="auth/login.php" class="bg-white text-primary-red px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4.5 rounded-lg text-base sm:text-lg font-semibold hover:bg-gray-100 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 inline-block">Contact Security Office</a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer id="contact" class="bg-gray-900 text-white py-8 sm:py-12 md:py-16">
-        <div class="max-w-6xl mx-auto px-4 sm:px-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12 mb-8 sm:mb-10 md:mb-12">
-                <div>
-                    <h3 class="text-xl sm:text-2xl font-bold mb-3 md:mb-4 text-primary-red">BSU Vehicle Scanner</h3>
-                    <p class="text-sm sm:text-base text-gray-300 leading-relaxed">Advanced vehicle scanning system for university security management.</p>
-                </div>
-                <div>
-                    <h4 class="text-lg sm:text-xl font-semibold mb-3 md:mb-4">Quick Links</h4>
-                    <ul class="list-none">
-                        <li class="mb-2 sm:mb-3"><a href="#features" class="text-sm sm:text-base text-gray-300 hover:text-primary-red transition-colors duration-300 no-underline">Features</a></li>
-                        <li class="mb-2 sm:mb-3"><a href="#how-it-works" class="text-sm sm:text-base text-gray-300 hover:text-primary-red transition-colors duration-300 no-underline">How It Works</a></li>
-                        <li class="mb-2 sm:mb-3"><a href="#contact" class="text-sm sm:text-base text-gray-300 hover:text-primary-red transition-colors duration-300 no-underline">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg sm:text-xl font-semibold mb-3 md:mb-4">Contact</h4>
-                    <ul class="list-none text-sm sm:text-base text-gray-300">
-                        <li class="mb-2 sm:mb-3">Security Office</li>
-                        <li class="mb-2 sm:mb-3">Email: security@bsu.edu</li>
-                        <li class="mb-2 sm:mb-3">Phone: (123) 456-7890</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="text-center pt-6 sm:pt-8 border-t border-white/10 text-gray-400">
-                <p class="text-xs sm:text-sm">&copy; 2024 BSU Vehicle Scanner. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="js/script.js"></script>
-</body>
-</html>
+    <?php require_once 'includes/footer.php'; ?>
 
