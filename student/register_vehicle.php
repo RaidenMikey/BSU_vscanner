@@ -3,6 +3,7 @@ session_start();
 require_once '../lib/session_timeout.php';
 require_once '../config/config.php';
 require_once '../lib/qrcode_generator.php';
+require_once '../upload_to_drive.php';
 
 // Ensure only students can access
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'student') {
@@ -139,6 +140,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $driverLicensePath = handleImageUpload('driver_license_image', $baseUploadDir, $baseUploadRelative, 'driver_license', $errors);
         $orPath = handleImageUpload('or_image', $baseUploadDir, $baseUploadRelative, 'official_receipt', $errors);
         $crPath = handleImageUpload('cr_image', $baseUploadDir, $baseUploadRelative, 'certificate_registration', $errors);
+
+        // Upload to Google Drive
+        if ($driverLicensePath) {
+            $localFile = $baseUploadDir . basename($driverLicensePath);
+            $fileName = basename($driverLicensePath);
+            $driveId = uploadToDrive($localFile, $fileName);
+            if ($driveId) {
+                error_log("Driver License uploaded to Drive. ID: " . $driveId);
+            }
+        }
+
+        if ($orPath) {
+            $localFile = $baseUploadDir . basename($orPath);
+            $fileName = basename($orPath);
+            $driveId = uploadToDrive($localFile, $fileName);
+            if ($driveId) {
+                error_log("OR uploaded to Drive. ID: " . $driveId);
+            }
+        }
+
+        if ($crPath) {
+            $localFile = $baseUploadDir . basename($crPath);
+            $fileName = basename($crPath);
+            $driveId = uploadToDrive($localFile, $fileName);
+            if ($driveId) {
+                error_log("CR uploaded to Drive. ID: " . $driveId);
+            }
+        }
     }
 
     if (empty($errors)) {
