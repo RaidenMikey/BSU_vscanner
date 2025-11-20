@@ -14,6 +14,11 @@ if (isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Check for session timeout
+if (isset($_GET['timeout']) && $_GET['timeout'] == 1) {
+    $error = 'Session expired. Please log in again.';
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get form data

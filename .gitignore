@@ -1,0 +1,17 @@
+# Composer dependencies
+/vendor/
+
+# Composer lock (optional, sometimes you want to keep it)
+/composer.lock
+
+# Environment/config files
+/config/*.php
+
+# Temporary files
+*.log
+*.cache
+*.tmp
+
+# IDE files
+/.vscode/
+/.idea/

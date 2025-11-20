@@ -1,0 +1,5 @@
+# Prevent ANYONE from accessing JSON files directly
+<Files *.json>
+    Order allow,deny
+    Deny from all
+</Files>

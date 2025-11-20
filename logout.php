@@ -6,6 +6,11 @@ if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
     $redirect = 'adminlogin.php';
 }
 
+// Check for timeout parameter
+if (isset($_GET['timeout']) && $_GET['timeout'] == 1) {
+    $redirect .= '?timeout=1';
+}
+
 // Destroy all session data
 session_unset();
 session_destroy();

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once '../lib/session_timeout.php';
 require_once '../config/config.php';
 
 // Student access control
