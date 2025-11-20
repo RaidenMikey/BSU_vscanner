@@ -134,8 +134,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $baseUploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'vehicles' . DIRECTORY_SEPARATOR . $user_id . DIRECTORY_SEPARATOR;
-        $baseUploadRelative = 'uploads/vehicles/' . $user_id . '/';
+        // Construct the new directory structure: uploads/vehicles/yyyy/mm/srcode/vehicle_type/vehicle_unit
+        $year = date('Y');
+        $month = date('m');
+        $srCode = preg_replace('/[^A-Za-z0-9\-]/', '', $user['student_id'] ?? 'unknown'); // Sanitize SR Code
+        
+        // Sanitize Brand and Model for directory name
+        // Replace spaces with underscores and remove special characters
+        $safeBrand = preg_replace('/[^A-Za-z0-9]/', '', str_replace(' ', '_', $brand));
+        $safeModel = preg_replace('/[^A-Za-z0-9]/', '', str_replace(' ', '_', $model));
+        $vehicleUnit = $safeBrand . '_' . $safeModel;
+        
+        // Construct relative path
+        $baseUploadRelative = "uploads/vehicles/{$year}/{$month}/{$srCode}/{$vehicleType}/{$vehicleUnit}/";
+        
+        // Construct absolute path
+        $baseUploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $baseUploadRelative);
 
         $driverLicensePath = handleImageUpload('driver_license_image', $baseUploadDir, $baseUploadRelative, 'driver_license', $errors);
         $orPath = handleImageUpload('or_image', $baseUploadDir, $baseUploadRelative, 'official_receipt', $errors);
